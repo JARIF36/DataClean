@@ -2,14 +2,42 @@ import pandas as pd
 import re
 
 def load_csv(file):
-   try: 
-    df = pd.read_csv(file)
-    if df.empty:
-      raise ValueError(f"The csv file is empty")
-      
-    return df
-   except Exception as e:
-     raise ValueError(f"Could not Read the CSV file :{e}")
+    encodings = [
+        "utf-8",
+        "utf-8-sig",
+        "cp1252",
+        "latin1",
+        "iso-8859-1"
+    ]
+
+    last_error = None
+
+    for encoding in encodings:
+        try:
+            file.seek(0)
+
+            df = pd.read_csv(
+                file,
+                encoding=encoding
+            )
+
+            if df.empty:
+                raise ValueError("The CSV file is empty.")
+
+            return df
+
+        except UnicodeDecodeError as e:
+            last_error = e
+
+        except pd.errors.ParserError as e:
+            raise ValueError(
+                f"Could not parse the CSV file: {e}"
+            )
+
+    raise ValueError(
+        "Could not read the CSV file. "
+        "The file may use an unsupported encoding."
+    )
    
 def profile_data(df):
     profile = {
